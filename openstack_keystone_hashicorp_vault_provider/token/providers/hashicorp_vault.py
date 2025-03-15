@@ -88,10 +88,8 @@ class JWSFormatter:
 
         keys = []
 
-        for version, key_data in token_keys_resp["data"]["keys"].items():
+        for _, key_data in token_keys_resp["data"]["keys"].items():
             keys.append(key_data["public_key"])
-
-        print(keys)
 
         return keys
 
