@@ -5,7 +5,7 @@ from keystone.credential.providers import core
 from keystone.i18n import _
 from oslo_config import cfg
 
-from openstack_keystone_hashicorp_vault_provider.credential.providers import (
+from openstack_keystone_hashicorp_vault_provider.credential.providers.options import (
     hashicorp_vault_opts,
 )
 
