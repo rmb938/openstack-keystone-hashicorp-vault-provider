@@ -91,6 +91,8 @@ class JWSFormatter:
         for version, key_data in token_keys_resp["data"]["keys"].items():
             keys += key_data["public_key"].encode("utf-8")
 
+        print(keys)
+
         return keys
 
     def create_token(
@@ -142,21 +144,27 @@ class JWSFormatter:
             if v is None:
                 payload.pop(k)
 
-        header = base64.urlsafe_b64encode(
-            json.dumps(
-                {
-                    "alg": "ES256",
-                    "typ": "JWT",
-                }
-            ).encode("utf-8")
-        ).decode("utf-8")
+        header = (
+            base64.urlsafe_b64encode(
+                json.dumps(
+                    {
+                        "alg": "ES256",
+                        "typ": "JWT",
+                    }
+                ).encode("utf-8")
+            )
+            .rstrip(b"=")
+            .decode("utf-8")
+        )
 
-        payload = base64.urlsafe_b64encode(json.dumps(payload).encode("utf-8")).decode(
-            "utf-8"
+        jwt_payload = (
+            base64.urlsafe_b64encode(json.dumps(payload).encode("utf-8"))
+            .rstrip(b"=")
+            .decode("utf-8")
         )
 
         message = base64.standard_b64encode(
-            f"{header}.{payload}".encode("utf-8")
+            f"{header}.{jwt_payload}".encode("utf-8")
         ).decode("utf-8")
 
         client = create_vault_client()
@@ -170,7 +178,7 @@ class JWSFormatter:
 
         signature = sign_resp["data"]["signature"].removeprefix("vault:v1:")
 
-        token_id = f"{header}.{payload}.{signature}"
+        token_id = f"{header}.{jwt_payload}.{signature}"
 
         # TODO: use vault transit backend to sign jwt
         # See https://github.com/hashicorp/vault/issues/5333#issuecomment-678725132
