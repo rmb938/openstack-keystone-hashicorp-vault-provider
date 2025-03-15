@@ -83,7 +83,8 @@ class JWSFormatter:
     def public_keys(self):
         client = create_vault_client()
         token_keys_resp = client.secrets.transit.read_key(
-            mount_point="transit_openstack_keystone_token", name="token"
+            mount_point=CONF.token_hashicorp_vault.transit_mount_point,
+            name=CONF.token_hashicorp_vault.transit_key_name,
         )
 
         keys = []
@@ -167,8 +168,8 @@ class JWSFormatter:
 
         client = create_vault_client()
         sign_resp = client.secrets.transit.sign_data(
-            mount_point="transit_openstack_keystone_token",
-            name="token",
+            mount_point=CONF.token_hashicorp_vault.transit_mount_point,
+            name=CONF.token_hashicorp_vault.transit_key_name,
             hash_algorithm="sha2-256",
             marshaling_algorithm="jws",
             hash_input=message,
