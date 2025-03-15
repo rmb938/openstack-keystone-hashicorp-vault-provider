@@ -20,6 +20,7 @@
 
 import datetime
 
+import hvac
 import jwt
 from keystone import exception
 from keystone.common import utils
@@ -40,9 +41,15 @@ class Provider(base.Provider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # TODO: try and connect to vault and validate
-        # subs = {"vault_address": CONF.token_hashicorp_vault.vault_address}
-        # raise SystemExit(_("something about no vault transit backend") % subs)
+        client = hvac.Client(
+            url=CONF.token_hashicorp_vault.vault_address,
+        )
+        client.is_authenticated()
+
+        token_keys_resp = client.secrets.transit.read_key(
+            mount_point="transit_openstack_keystone_token", name="token"
+        )
+        print(token_keys_resp)
 
         self.token_formatter = JWSFormatter()
 
