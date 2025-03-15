@@ -28,7 +28,7 @@ from keystone.token.providers import base
 from oslo_config import cfg
 from oslo_utils import timeutils
 
-from openstack_keystone_hashcorp_vault_provider.token.providers.options import (
+from openstack_keystone_hashicorp_vault_provider.token.providers.options import (
     hashicorp_vault_opts,
 )
 
