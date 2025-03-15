@@ -171,7 +171,7 @@ class JWSFormatter:
         sign_resp = client.secrets.transit.sign_data(
             mount_point="transit_openstack_keystone_token",
             name="token",
-            hash_algorithm="sha2-384",
+            hash_algorithm="sha2-256",
             marshaling_algorithm="jws",
             hash_input=message,
         )
