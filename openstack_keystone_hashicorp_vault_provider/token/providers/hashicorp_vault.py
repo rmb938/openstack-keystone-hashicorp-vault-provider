@@ -178,11 +178,6 @@ class JWSFormatter:
 
         token_id = f"{header}.{jwt_payload}.{signature}"
 
-        # TODO: use vault transit backend to sign jwt
-        # See https://github.com/hashicorp/vault/issues/5333#issuecomment-678725132
-        # Can't use python jwt cause we don't have the private key
-        # Probably could do a custom implementation somehow, but that's a lot of work.
-
         return token_id, issued_at
 
     def validate_token(self, token_id):
