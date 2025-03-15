@@ -167,7 +167,7 @@ class JWSFormatter:
             hash_input=message,
         )
 
-        signature = sign_resp["data"]["signature"].remove_prefix("vault:v1:")
+        signature = sign_resp["data"]["signature"].removeprefix("vault:v1:")
 
         token_id = f"{header}.{payload}.{signature}"
 
