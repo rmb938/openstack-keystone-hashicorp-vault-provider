@@ -18,7 +18,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import base64
 import datetime
+import json
 
 import hvac
 import jwt
@@ -37,19 +39,20 @@ CONF = cfg.CONF
 CONF.register_opts(hashicorp_vault_opts, group="token_hashicorp_vault")
 
 
+def create_vault_client() -> hvac.Client:
+    client = hvac.Client(
+        url=CONF.token_hashicorp_vault.vault_address,
+    )
+    client.is_authenticated()
+
+    return client
+
+
 class Provider(base.Provider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        client = hvac.Client(
-            url=CONF.token_hashicorp_vault.vault_address,
-        )
-        client.is_authenticated()
-
-        token_keys_resp = client.secrets.transit.read_key(
-            mount_point="transit_openstack_keystone_token", name="token"
-        )
-        print(token_keys_resp)
+        create_vault_client()
 
         self.token_formatter = JWSFormatter()
 
@@ -79,8 +82,16 @@ class JWSFormatter:
 
     @property
     def public_keys(self):
+        client = create_vault_client()
+        token_keys_resp = client.secrets.transit.read_key(
+            mount_point="transit_openstack_keystone_token", name="token"
+        )
+
         keys = []
-        # TODO: read public key from vault
+
+        for version, key_data in token_keys_resp["data"]["keys"].items():
+            keys += key_data["public_key"]
+
         return keys
 
     def create_token(
@@ -132,7 +143,32 @@ class JWSFormatter:
             if v is None:
                 payload.pop(k)
 
-        token_id = None
+        header = base64.urlsafe_b64encode(
+            json.dumps(
+                {
+                    "alg": "ES256",
+                    "typ": "JWT",
+                }
+            ).encode("utf-8")
+        ).decode("utf-8")
+
+        payload = base64.urlsafe_b64encode(json.dumps(payload).encode("utf-8")).decode(
+            "utf-8"
+        )
+
+        message = base64.standard_b64encode(
+            f"{header}.{payload}".encode("utf-8")
+        ).decode("utf-8")
+
+        client = create_vault_client()
+        sign_resp = client.secrets.transit.sign_data(
+            mount_point="transit_openstack_keystone_token",
+            name="token",
+            hash_algorithm="sha2-384",
+            hash_input=message,
+        )
+
+        token_id = sign_resp["data"]["signature"]
 
         # TODO: use vault transit backend to sign jwt
         # See https://github.com/hashicorp/vault/issues/5333#issuecomment-678725132
@@ -190,7 +226,7 @@ class JWSFormatter:
                 return jwt.decode(
                     token_id,
                     public_key,
-                    algorithms="TODO:",
+                    algorithms="ES256",
                     options=options,
                 )
             except (jwt.InvalidSignatureError, jwt.DecodeError):
