@@ -89,7 +89,7 @@ class JWSFormatter:
         keys = []
 
         for version, key_data in token_keys_resp["data"]["keys"].items():
-            keys += key_data["public_key"]
+            keys += key_data["public_key"].encode("utf-8")
 
         return keys
 
@@ -164,6 +164,7 @@ class JWSFormatter:
             mount_point="transit_openstack_keystone_token",
             name="token",
             hash_algorithm="sha2-384",
+            marshaling_algorithm="jws",
             hash_input=message,
         )
 
