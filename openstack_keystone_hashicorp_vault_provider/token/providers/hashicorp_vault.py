@@ -17,7 +17,6 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-
 import base64
 import datetime
 import json
@@ -168,7 +167,9 @@ class JWSFormatter:
             hash_input=message,
         )
 
-        token_id = sign_resp["data"]["signature"]
+        signature = sign_resp["data"]["signature"].remove_prefix("vault:v1:")
+
+        token_id = f"{header}.{payload}.{signature}"
 
         # TODO: use vault transit backend to sign jwt
         # See https://github.com/hashicorp/vault/issues/5333#issuecomment-678725132
