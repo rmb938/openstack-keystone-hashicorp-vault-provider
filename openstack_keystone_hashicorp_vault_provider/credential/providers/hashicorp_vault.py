@@ -15,7 +15,7 @@ CONF.register_opts(hashicorp_vault_opts, group="credential_hashicorp_vault")
 
 def create_vault_client() -> hvac.Client:
     client = hvac.Client(
-        url=CONF.token_hashicorp_vault.vault_address,
+        url=CONF.credential_hashicorp_vault.vault_address,
     )
     client.is_authenticated()
 
@@ -32,8 +32,8 @@ class Provider(core.Provider):
         client = create_vault_client()
 
         encrypt_resp = client.secrets.transit.encrypt_data(
-            mount_point=CONF.token_hashicorp_vault.transit_mount_point,
-            name=CONF.token_hashicorp_vault.transit_key_name,
+            mount_point=CONF.credential_hashicorp_vault.transit_mount_point,
+            name=CONF.credential_hashicorp_vault.transit_key_name,
             plaintext=base64.standard_b64encode(credential).decode("utf-8"),
         )
 
@@ -43,8 +43,8 @@ class Provider(core.Provider):
         client = create_vault_client()
 
         decrypt_resp = client.secrets.transit.decrypt_data(
-            mount_point=CONF.token_hashicorp_vault.transit_mount_point,
-            name=CONF.token_hashicorp_vault.transit_key_name,
+            mount_point=CONF.credential_hashicorp_vault.transit_mount_point,
+            name=CONF.credential_hashicorp_vault.transit_key_name,
             ciphertext=credential,
         )
 
