@@ -35,6 +35,21 @@ class Provider(base.Provider):
 
         create_vault_client()
 
+    @property
+    def public_keys(self):
+        client = create_vault_client()
+        token_keys_resp = client.secrets.transit.read_key(
+            mount_point=CONF.receipt_hashicorp_vault.transit_mount_point,
+            name=CONF.receipt_hashicorp_vault.transit_key_name,
+        )
+
+        keys = []
+
+        for _, key_data in token_keys_resp["data"]["keys"].items():
+            keys.append(key_data["public_key"])
+
+        return keys
+
     def validate_receipt(self, receipt_id: str) -> tuple[str, list[str], str, str]:
         payload = self._decode_receipt_from_id(receipt_id)
 
