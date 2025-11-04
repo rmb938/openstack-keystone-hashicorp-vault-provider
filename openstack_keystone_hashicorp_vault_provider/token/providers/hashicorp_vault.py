@@ -20,6 +20,7 @@
 import base64
 import datetime
 import json
+import re
 
 import hvac
 import jwt
@@ -75,6 +76,31 @@ class Provider(base.Provider):
 
     def validate_token(self, token_id):
         return self.token_formatter.validate_token(token_id)
+
+
+def remove_vault_prefix(s):
+    """
+    Removes prefixes that match the pattern 'vault:v<number>:'
+    from the beginning of a string.
+
+    Args:
+      s: The input string.
+
+    Returns:
+      The string with the prefix removed, or the original string
+      if no matching prefix is found.
+    """
+    # The regular expression pattern:
+    # ^          -> Matches the start of the string
+    # vault:v    -> Matches the literal 'vault:v'
+    # \d+        -> Matches one or more digits (the version number)
+    # :          -> Matches the final colon
+    pattern = r"^vault:v\d+:"
+
+    # re.sub() replaces all occurrences of the pattern with the empty string ('')
+    # The count=1 ensures only the first occurrence (at the start) is replaced,
+    # although the '^' anchor makes it redundant, it's a good practice.
+    return re.sub(pattern, "", s, count=1)
 
 
 class JWSFormatter:
@@ -175,7 +201,7 @@ class JWSFormatter:
             hash_input=message,
         )
 
-        signature = sign_resp["data"]["signature"].removeprefix("vault:v1:")
+        signature = remove_vault_prefix(sign_resp["data"]["signature"])
 
         token_id = f"{header}.{jwt_payload}.{signature}"
 
